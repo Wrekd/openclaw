@@ -2700,12 +2700,11 @@ describe("collectCodexRouteWarnings", () => {
     expect(result.cfg.plugins?.allow).toEqual(["openai", "codex"]);
   });
 
-  it("treats bundled discovery compat allowlists as restrictive for the Codex harness", () => {
+  it("treats plugin allowlists as restrictive for the Codex harness", () => {
     const result = maybeRepairCodexRoutes({
       cfg: {
         plugins: {
           allow: ["openai"],
-          bundledDiscovery: "compat",
           entries: {
             openai: { enabled: true },
           },
@@ -2728,12 +2727,11 @@ describe("collectCodexRouteWarnings", () => {
     expect(result.cfg.plugins?.allow).toEqual(["openai", "codex"]);
   });
 
-  it("adds Codex to bundled discovery compat allowlists when re-enabling Codex", () => {
+  it("adds Codex to plugin allowlists when re-enabling Codex", () => {
     const result = maybeRepairCodexRoutes({
       cfg: {
         plugins: {
           allow: ["openai"],
-          bundledDiscovery: "compat",
           entries: {
             codex: { enabled: false },
           },

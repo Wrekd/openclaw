@@ -466,12 +466,11 @@ API key auth, and dynamic model resolution.
       | 10 | `resolveDynamicModel` | Accept arbitrary upstream model IDs |
       | 11 | `prepareDynamicModel` | Async metadata fetch before resolving |
       | 12 | `normalizeResolvedModel` | Transport rewrites before the runner |
-      | 13 | `contributeResolvedModelCompat` | Compat flags for vendor models behind another compatible transport |
-      | 14 | `normalizeToolSchemas` | Provider-owned tool-schema cleanup before registration |
-      | 15 | `inspectToolSchemas` | Provider-owned tool-schema diagnostics |
-      | 16 | `resolveReasoningOutputMode` | Tagged vs native reasoning-output contract |
-      | 17 | `prepareExtraParams` | Default request params |
-      | 18 | `createStreamFn` | Fully custom StreamFn transport |
+      | 13 | `normalizeToolSchemas` | Provider-owned tool-schema cleanup before registration |
+      | 14 | `inspectToolSchemas` | Provider-owned tool-schema diagnostics |
+      | 15 | `resolveReasoningOutputMode` | Tagged vs native reasoning-output contract |
+      | 16 | `prepareExtraParams` | Default request params |
+      | 17 | `createStreamFn` | Fully custom StreamFn transport |
       | 19 | `wrapStreamFn` | Custom headers/body wrappers on the normal stream path |
       | 20 | `resolveTransportTurnState` | Native per-turn headers/metadata |
       | 21 | `resolveWebSocketSessionPolicy` | Native WS session headers/cool-down |

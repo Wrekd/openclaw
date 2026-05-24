@@ -360,7 +360,6 @@ describe("AgentRuntimePlan", () => {
       workspaceDir: "/tmp/openclaw-runtime-plan",
       env: process.env,
       applyAutoEnable: undefined,
-      bundledProviderAllowlistCompat: undefined,
       bundledProviderVitestCompat: undefined,
     });
     const followupCall = latestFollowupRouteCall();
@@ -408,7 +407,6 @@ describe("AgentRuntimePlan", () => {
       workspaceDir: "/tmp/openclaw-runtime-plan",
       env: process.env,
       applyAutoEnable: undefined,
-      bundledProviderAllowlistCompat: undefined,
       bundledProviderVitestCompat: undefined,
     });
     const followupCall = latestFollowupRouteCall();

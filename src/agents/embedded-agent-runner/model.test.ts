@@ -3028,7 +3028,6 @@ describe("resolveModel", () => {
       authStorage: { mocked: true } as never,
       modelRegistry: discoverModels({ mocked: true } as never, "/tmp/agent"),
       runtimeHooks: {
-        applyProviderResolvedModelCompatWithPlugins: () => undefined,
         buildProviderUnknownModelHintWithPlugin: () => undefined,
         prepareProviderDynamicModel: async () => {},
         runProviderDynamicModel: () => undefined,

@@ -67,7 +67,6 @@ export function hasConfiguredWebSearchCredential(params: {
   env?: NodeJS.ProcessEnv;
   searchConfig?: Record<string, unknown>;
   origin?: PluginManifestRecord["origin"];
-  bundledAllowlistCompat?: boolean;
 }): boolean {
   const searchConfig =
     params.searchConfig ??

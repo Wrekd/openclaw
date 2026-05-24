@@ -64,6 +64,7 @@ import type {
   ProviderModernModelPolicyContext,
   ProviderPrepareDynamicModelContext,
   ProviderPreferRuntimeResolvedModelContext,
+  ProviderPlugin,
   ProviderResolveExternalAuthProfilesContext,
   ProviderResolveExternalOAuthProfilesContext,
   ProviderPrepareRuntimeAuthContext,
@@ -71,7 +72,6 @@ import type {
   ProviderResolveConfigApiKeyContext,
   ProviderSanitizeReplayHistoryContext,
   ProviderResolveUsageAuthContext,
-  ProviderPlugin,
   ProviderResolveDynamicModelContext,
   ProviderResolveTransportTurnStateContext,
   ProviderResolveWebSocketSessionPolicyContext,
@@ -314,79 +314,6 @@ export function normalizeProviderResolvedModelWithPlugin(params: {
   return (
     resolveProviderRuntimePlugin(params)?.normalizeResolvedModel?.(params.context) ?? undefined
   );
-}
-
-function resolveProviderCompatHookPlugins(params: {
-  provider: string;
-  config?: OpenClawConfig;
-  workspaceDir?: string;
-  env?: NodeJS.ProcessEnv;
-}): ProviderPlugin[] {
-  const candidates = resolveProviderPluginsForHooks(params);
-  const owner = resolveProviderRuntimePlugin(params);
-  if (!owner) {
-    return candidates;
-  }
-
-  const ordered = [owner, ...candidates];
-  const seen = new Set<string>();
-  return ordered.filter((candidate) => {
-    const key = `${candidate.pluginId ?? ""}:${candidate.id}`;
-    if (seen.has(key)) {
-      return false;
-    }
-    seen.add(key);
-    return true;
-  });
-}
-
-function applyCompatPatchToModel(
-  model: ProviderRuntimeModel,
-  patch: Record<string, unknown>,
-): ProviderRuntimeModel {
-  const compat =
-    model.compat && typeof model.compat === "object"
-      ? (model.compat as Record<string, unknown>)
-      : undefined;
-  if (Object.entries(patch).every(([key, value]) => compat?.[key] === value)) {
-    return model;
-  }
-  return {
-    ...model,
-    compat: {
-      ...compat,
-      ...patch,
-    },
-  };
-}
-
-export function applyProviderResolvedModelCompatWithPlugins(params: {
-  provider: string;
-  config?: OpenClawConfig;
-  workspaceDir?: string;
-  env?: NodeJS.ProcessEnv;
-  context: ProviderNormalizeResolvedModelContext;
-}): ProviderRuntimeModel | undefined {
-  let nextModel = params.context.model;
-  let changed = false;
-
-  for (const plugin of resolveProviderCompatHookPlugins(params)) {
-    const patch = plugin.contributeResolvedModelCompat?.({
-      ...params.context,
-      model: nextModel,
-    });
-    if (!patch || typeof patch !== "object") {
-      continue;
-    }
-    const patchedModel = applyCompatPatchToModel(nextModel, patch as Record<string, unknown>);
-    if (patchedModel === nextModel) {
-      continue;
-    }
-    nextModel = patchedModel;
-    changed = true;
-  }
-
-  return changed ? nextModel : undefined;
 }
 
 export function applyProviderResolvedTransportWithPlugin(params: {
@@ -893,7 +820,6 @@ export function resolveProviderSyntheticAuthWithPlugin(params: {
   const runtimeResolved = resolveProviderRuntimePlugin({
     ...params,
     applyAutoEnable: false,
-    bundledProviderAllowlistCompat: false,
     bundledProviderVitestCompat: false,
   })?.resolveSyntheticAuth?.(params.context);
   if (runtimeResolved) {
@@ -907,7 +833,6 @@ export function resolveProviderSyntheticAuthWithPlugin(params: {
       ...params,
       provider: providerRef,
       applyAutoEnable: false,
-      bundledProviderAllowlistCompat: false,
       bundledProviderVitestCompat: false,
     })?.resolveSyntheticAuth?.(params.context);
     if (runtimeProviderResolved) {

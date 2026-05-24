@@ -1,7 +1,6 @@
 import { applyPluginAutoEnable } from "../config/plugin-auto-enable.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import {
-  withBundledPluginAllowlistCompat,
   withBundledPluginEnablementCompat,
   withBundledPluginVitestCompat,
 } from "./bundled-compat.js";
@@ -14,14 +13,12 @@ import {
 import { getCurrentPluginMetadataSnapshot } from "./current-plugin-metadata-snapshot.js";
 
 export type PluginActivationCompatConfig = {
-  allowlistPluginIds?: readonly string[];
   enablementPluginIds?: readonly string[];
   vitestPluginIds?: readonly string[];
 };
 
 export type PluginActivationBundledCompatMode = {
-  allowlist?: boolean;
-  enablement?: "always" | "allowlist";
+  enablement?: "always";
   vitest?: boolean;
 };
 
@@ -80,9 +77,7 @@ export function withActivatedPluginIds(params: {
     return params.config;
   }
   const originalAllow = params.config?.plugins?.allow ?? [];
-  // Empty allowlists are still open; only explicit compat widens configured allowlists.
-  const useAllowlistDiscovery =
-    params.config?.plugins?.bundledDiscovery !== "compat" && originalAllow.length > 0;
+  const useAllowlistDiscovery = originalAllow.length > 0;
   const originalAllowSet = useAllowlistDiscovery ? new Set(originalAllow) : undefined;
   const allow = new Set(originalAllow);
   const entries = {
@@ -121,18 +116,12 @@ export function applyPluginCompatibilityOverrides(params: {
   compat?: PluginActivationCompatConfig;
   env: NodeJS.ProcessEnv;
 }): OpenClawConfig | undefined {
-  const allowlistCompat = params.compat?.allowlistPluginIds?.length
-    ? withBundledPluginAllowlistCompat({
-        config: params.config,
-        pluginIds: params.compat.allowlistPluginIds,
-      })
-    : params.config;
   const enablementCompat = params.compat?.enablementPluginIds?.length
     ? withBundledPluginEnablementCompat({
-        config: allowlistCompat,
+        config: params.config,
         pluginIds: params.compat.enablementPluginIds,
       })
-    : allowlistCompat;
+    : params.config;
   const vitestCompat = params.compat?.vitestPluginIds?.length
     ? withBundledPluginVitestCompat({
         config: enablementCompat,
@@ -145,28 +134,17 @@ export function applyPluginCompatibilityOverrides(params: {
 
 function shouldResolveBundledCompatPluginIds(params: {
   compatMode: PluginActivationBundledCompatMode;
-  allowlistCompatEnabled: boolean;
 }): boolean {
-  return (
-    params.allowlistCompatEnabled ||
-    params.compatMode.enablement === "always" ||
-    (params.compatMode.enablement === "allowlist" && params.allowlistCompatEnabled) ||
-    params.compatMode.vitest === true
-  );
+  return params.compatMode.enablement === "always" || params.compatMode.vitest === true;
 }
 
 function createBundledPluginCompatConfig(params: {
   compatMode: PluginActivationBundledCompatMode;
-  allowlistCompatEnabled: boolean;
   compatPluginIds: string[];
 }): PluginActivationCompatConfig {
   return {
-    allowlistPluginIds: params.allowlistCompatEnabled ? params.compatPluginIds : undefined,
     enablementPluginIds:
-      params.compatMode.enablement === "always" ||
-      (params.compatMode.enablement === "allowlist" && params.allowlistCompatEnabled)
-        ? params.compatPluginIds
-        : undefined,
+      params.compatMode.enablement === "always" ? params.compatPluginIds : undefined,
     vitestPluginIds: params.compatMode.vitest ? params.compatPluginIds : undefined,
   };
 }
@@ -280,10 +258,8 @@ export function resolveBundledPluginCompatibleActivationInputs(
     workspaceDir: params.workspaceDir,
     applyAutoEnable: params.applyAutoEnable,
   });
-  const allowlistCompatEnabled = params.compatMode.allowlist === true;
   const shouldResolveCompatPluginIds = shouldResolveBundledCompatPluginIds({
     compatMode: params.compatMode,
-    allowlistCompatEnabled,
   });
   const compatPluginIds = shouldResolveCompatPluginIds
     ? params.resolveCompatPluginIds({
@@ -301,7 +277,6 @@ export function resolveBundledPluginCompatibleActivationInputs(
     workspaceDir: params.workspaceDir,
     compat: createBundledPluginCompatConfig({
       compatMode: params.compatMode,
-      allowlistCompatEnabled,
       compatPluginIds,
     }),
   });
@@ -330,10 +305,8 @@ export function resolveBundledPluginCompatibleLoadValues(
     autoEnabledReasons = autoEnabled.autoEnabledReasons;
   }
 
-  const allowlistCompatEnabled = params.compatMode.allowlist === true;
   const shouldResolveCompatPluginIds = shouldResolveBundledCompatPluginIds({
     compatMode: params.compatMode,
-    allowlistCompatEnabled,
   });
   const compatPluginIds = shouldResolveCompatPluginIds
     ? params.resolveCompatPluginIds({
@@ -347,7 +320,6 @@ export function resolveBundledPluginCompatibleLoadValues(
     config: resolvedConfig,
     compat: createBundledPluginCompatConfig({
       compatMode: params.compatMode,
-      allowlistCompatEnabled,
       compatPluginIds,
     }),
     env,
