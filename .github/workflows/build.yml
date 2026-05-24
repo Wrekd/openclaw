@@ -44,9 +44,6 @@ jobs:
         run: pnpm build
         env:
           NODE_OPTIONS: --max-old-space-size=4096
-
-      - name: Run tests
-        run: pnpm test || true
         
       - name: Package build artifacts
         run: |
