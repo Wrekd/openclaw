@@ -52,13 +52,11 @@ function hasManifestWebSearchEnvCredentialCandidate(params: {
     if ((plugin.contracts?.webSearchProviders?.length ?? 0) === 0) {
       return false;
     }
-    const providerAuthEnvVars = plugin.providerAuthEnvVars;
-    if (!providerAuthEnvVars) {
-      return false;
-    }
-    return Object.values(providerAuthEnvVars)
-      .flat()
-      .some((envVar) => hasConfiguredCredentialValue(env[envVar]));
+    const envVars = [
+      ...(plugin.setup?.providers ?? []).flatMap((provider) => provider.envVars ?? []),
+      ...Object.values(plugin.providerAuthEnvVars ?? {}).flat(),
+    ];
+    return envVars.some((envVar) => hasConfiguredCredentialValue(env[envVar]));
   });
 }
 

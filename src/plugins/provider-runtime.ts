@@ -141,10 +141,6 @@ function hasExplicitProviderRuntimePluginActivation(params: {
   return ownerPluginIds.some((pluginId) => allow.has(pluginId) || entries[pluginId] !== undefined);
 }
 
-function resetExternalAuthFallbackWarningCacheForTest(): void {
-  warnedExternalAuthFallbackPluginIds.clear();
-}
-
 export {
   prepareProviderExtraParams,
   resolveProviderAuthProfileId,
@@ -153,6 +149,10 @@ export {
   resolveProviderRuntimePlugin,
   wrapProviderStreamFn,
 };
+
+function resetExternalAuthFallbackWarningCacheForTest(): void {
+  warnedExternalAuthFallbackPluginIds.clear();
+}
 
 export const testing = {
   resetExternalAuthFallbackWarningCacheForTest,
@@ -893,9 +893,6 @@ export function resolveExternalAuthProfilesWithPlugins(params: {
     const pluginId = plugin.pluginId ?? plugin.id;
     if (!declaredPluginIds.has(pluginId) && !warnedExternalAuthFallbackPluginIds.has(pluginId)) {
       warnedExternalAuthFallbackPluginIds.add(pluginId);
-      // Deprecated compatibility path for plugins that still implement
-      // resolveExternalOAuthProfiles or omit contracts.externalAuthProviders.
-      // Remove this warning with the fallback resolver after the migration window.
       log.warn(
         `Provider plugin "${sanitizeForLog(pluginId)}" uses external auth hooks without declaring contracts.externalAuthProviders. This compatibility fallback is deprecated and will be removed in a future release.`,
       );
@@ -955,4 +952,3 @@ export async function augmentModelCatalogWithProviderPlugins(params: {
   }
   return supplemental;
 }
-export { testing as __testing };

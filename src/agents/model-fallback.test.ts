@@ -558,20 +558,20 @@ describe("runWithModelFallback", () => {
     expect(result.attempts[0].reason).toBe("unknown");
   });
 
-  it("does not prepare agent harness plugins for forced PI candidates", async () => {
+  it("does not prepare agent harness plugins for forced OpenClaw candidates", async () => {
     const cfg = makeCfg({
       models: {
         providers: {
           openai: {
             baseUrl: "https://api.openai.com/v1",
-            agentRuntime: { id: "pi" },
+            agentRuntime: { id: "openclaw" },
             models: [],
           },
         },
       },
     });
     const prepareAgentHarnessRuntime = vi.fn(() => {
-      throw new Error("PI candidates should not prepare plugin harnesses");
+      throw new Error("OpenClaw candidates should not prepare plugin harnesses");
     });
     const run = vi.fn().mockResolvedValueOnce("ok");
 
@@ -591,7 +591,7 @@ describe("runWithModelFallback", () => {
   it("does not prepare agent harness plugins for implicit Codex candidates", async () => {
     const cfg = makeCfg();
     const prepareAgentHarnessRuntime = vi.fn(() => {
-      throw new Error("implicit Codex candidates should stay PI-compatible");
+      throw new Error("implicit Codex candidates should stay embedded-compatible");
     });
     const run = vi.fn().mockResolvedValueOnce("ok");
 

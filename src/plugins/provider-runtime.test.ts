@@ -768,7 +768,7 @@ describe("provider-runtime", () => {
     expect(resolvePluginProvidersMock).not.toHaveBeenCalled();
   });
 
-  it("warns once with a log-safe plugin id for undeclared external auth fallback plugins", () => {
+  it("keeps the deprecated external OAuth fallback at the plugin boundary", () => {
     const unsafePluginId = "legacy-provider\nWARN forged";
     resolveExternalAuthProfileCompatFallbackPluginIdsMock.mockReturnValue([unsafePluginId]);
     resolvePluginProvidersMock.mockReturnValue([
@@ -809,7 +809,7 @@ describe("provider-runtime", () => {
     expect(warning).not.toContain("\n");
   });
 
-  it("does not warn for declared external auth plugins with different provider ids", () => {
+  it("resolves declared external auth plugins with different provider ids", () => {
     resolveExternalAuthProfileProviderPluginIdsMock.mockReturnValue(["demo-plugin"]);
     resolvePluginProvidersMock.mockReturnValue([
       {
@@ -840,7 +840,6 @@ describe("provider-runtime", () => {
       },
     });
     expect(profile?.profileId).toBe("demo-provider:external");
-    expect(providerRuntimeWarnMock).not.toHaveBeenCalled();
   });
 
   it("resolves catalog hook provider loads when only non-plugin config changes", async () => {

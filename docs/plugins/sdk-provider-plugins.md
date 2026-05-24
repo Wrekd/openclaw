@@ -61,8 +61,13 @@ API key auth, and dynamic model resolution.
       "modelSupport": {
         "modelPrefixes": ["acme-"]
       },
-      "providerAuthEnvVars": {
-        "acme-ai": ["ACME_AI_API_KEY"]
+      "setup": {
+        "providers": [
+          {
+            "id": "acme-ai",
+            "envVars": ["ACME_AI_API_KEY"]
+          }
+        ]
       },
       "providerAuthAliases": {
         "acme-ai-coding": "acme-ai"
@@ -88,7 +93,7 @@ API key auth, and dynamic model resolution.
     ```
     </CodeGroup>
 
-    The manifest declares `providerAuthEnvVars` so OpenClaw can detect
+    The manifest declares `setup.providers[].envVars` so OpenClaw can detect
     credentials without loading your plugin runtime. Add `providerAuthAliases`
     when a provider variant should reuse another provider id's auth. `modelSupport`
     is optional and lets OpenClaw auto-load your provider plugin from shorthand

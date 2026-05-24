@@ -295,7 +295,7 @@ describe("qa cli runtime", () => {
         repoRoot: "/tmp/openclaw-repo",
         providerMode: "mock-openai",
         scenarioIds: ["approval-turn-tool-followthrough"],
-        runtimePair: "pi,codex",
+        runtimePair: "legacy-runtime,codex",
       }),
     ).rejects.toThrow('--runtime-pair only supports "openclaw" and "codex".');
     expect(runQaSuiteFromRuntime).not.toHaveBeenCalled();

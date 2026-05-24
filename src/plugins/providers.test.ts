@@ -679,7 +679,7 @@ describe("resolvePluginProviders", () => {
     expect(resolveRuntimePluginRegistryMock).not.toHaveBeenCalled();
   });
 
-  it("reuses declared external auth plugin ids for compat fallback filtering", () => {
+  it("keeps undeclared external auth provider fallback scoped to active external providers", () => {
     setManifestPlugins([
       createManifestProviderPlugin({
         id: "declared-auth-owner",

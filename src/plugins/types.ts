@@ -1790,8 +1790,8 @@ export type ProviderPlugin = {
     | undefined;
   /**
    * @deprecated Declare `contracts.externalAuthProviders` in the plugin manifest
-   * and implement `resolveExternalAuthProfiles` instead. This compatibility hook
-   * is loaded through a slower fallback path and will be removed in a future release.
+   * and implement `resolveExternalAuthProfiles` instead. Kept at the public
+   * plugin boundary until the SDK removal window closes.
    */
   resolveExternalOAuthProfiles?: (
     ctx: ProviderResolveExternalOAuthProfilesContext,

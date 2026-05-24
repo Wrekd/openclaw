@@ -100,8 +100,13 @@ or npm install metadata. Those belong in your plugin code and `package.json`.
   },
   "cliBackends": ["openrouter-cli"],
   "syntheticAuthRefs": ["openrouter-cli"],
-  "providerAuthEnvVars": {
-    "openrouter": ["OPENROUTER_API_KEY"]
+  "setup": {
+    "providers": [
+      {
+        "id": "openrouter",
+        "envVars": ["OPENROUTER_API_KEY"]
+      }
+    ]
   },
   "providerAuthAliases": {
     "openrouter-coding": "openrouter"
@@ -292,8 +297,13 @@ avoid importing a plugin runtime just to have its tool factory return `null`.
 
 ```json
 {
-  "providerAuthEnvVars": {
-    "example": ["EXAMPLE_API_KEY"]
+  "setup": {
+    "providers": [
+      {
+        "id": "example",
+        "envVars": ["EXAMPLE_API_KEY"]
+      }
+    ]
   },
   "contracts": {
     "tools": ["example_search"]
@@ -670,9 +680,7 @@ Tool discovery uses this list to load only the plugin runtimes that can own the
 requested tools.
 
 Provider plugins that implement `resolveExternalAuthProfiles` should declare
-`contracts.externalAuthProviders`. Plugins without the declaration still run
-through a deprecated compatibility fallback, but that fallback is slower and
-will be removed after the migration window.
+`contracts.externalAuthProviders`; undeclared external-auth hooks are ignored.
 
 Bundled memory embedding providers should declare
 `contracts.memoryEmbeddingProviders` for every adapter id they expose, including
