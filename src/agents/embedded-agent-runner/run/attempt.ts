@@ -1023,7 +1023,7 @@ function sessionMessagesContainIdempotencyKey(
 }
 
 function flushSessionManagerFile(sessionManager: ReturnType<typeof guardSessionManager>): void {
-  (sessionManager as unknown as { _rewriteFile?: () => void })["_rewriteFile"]?.();
+  (sessionManager as unknown as { rewriteFile?: () => void }).rewriteFile?.();
 }
 
 export function shouldRunLlmOutputHooksForAttempt(params: { promptErrorSource: string | null }) {
@@ -1065,7 +1065,7 @@ function removeTrailingMidTurnPrecheckAssistantError(params: {
     }>;
     byId?: Map<string, unknown>;
     leafId?: string | null;
-    _rewriteFile?: () => void;
+    rewriteFile?: () => void;
   };
   const lastEntry = mutableSessionManager.fileEntries?.at(-1);
   if (lastEntry?.type !== "message" || !isMidTurnPrecheckAssistantError(lastEntry.message)) {
@@ -1076,7 +1076,7 @@ function removeTrailingMidTurnPrecheckAssistantError(params: {
     }
     return;
   }
-  if (typeof mutableSessionManager["_rewriteFile"] !== "function") {
+  if (typeof mutableSessionManager.rewriteFile !== "function") {
     log.warn(
       "[context-overflow-midturn-precheck] removed synthetic assistant error from active session but SessionManager rewrite hook is unavailable",
     );
@@ -1087,7 +1087,7 @@ function removeTrailingMidTurnPrecheckAssistantError(params: {
     mutableSessionManager.byId?.delete(lastEntry.id);
   }
   mutableSessionManager.leafId = lastEntry.parentId ?? null;
-  mutableSessionManager["_rewriteFile"]();
+  mutableSessionManager.rewriteFile();
 }
 
 export function resolveAttemptToolPolicyMessageProvider(params: {
