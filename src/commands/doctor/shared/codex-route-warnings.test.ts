@@ -97,7 +97,7 @@ describe("collectCodexRouteWarnings", () => {
     ]);
   });
 
-  it("still warns when OPENCLAW_AGENT_RUNTIME selects native Codex with a legacy model ref", () => {
+  it("ignores OPENCLAW_AGENT_RUNTIME when reporting legacy model refs", () => {
     const warnings = collectCodexRouteWarnings({
       cfg: {
         agents: {
@@ -114,7 +114,7 @@ describe("collectCodexRouteWarnings", () => {
     expect(warnings).toStrictEqual([
       [
         "- Legacy `openai-codex/*` model refs should be rewritten to `openai/*`.",
-        '- agents.defaults.model: openai-codex/gpt-5.5 should become openai/gpt-5.5; current runtime is "codex".',
+        "- agents.defaults.model: openai-codex/gpt-5.5 should become openai/gpt-5.5.",
         "- Run `openclaw doctor --fix`: it rewrites configured model refs and stale sessions to `openai/*`, moves Codex intent to provider/model runtime policy, and clears old whole-agent runtime pins.",
       ].join("\n"),
     ]);
