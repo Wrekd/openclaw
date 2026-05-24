@@ -108,6 +108,9 @@ function resolveProfileRuntimeAlias(params: {
   if (providerAuthKey !== profileAuthKey) {
     return undefined;
   }
+  if (profileProvider === provider) {
+    return undefined;
+  }
   return resolveCliRuntimeModelBackendBinding({
     config: params.cfg,
     provider,

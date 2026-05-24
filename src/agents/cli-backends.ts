@@ -223,10 +223,20 @@ export function resolveCliRuntimeModelBackendBinding(params: {
   if (!provider || !runtime) {
     return undefined;
   }
+  const runtimeBinding = listCliRuntimeModelBackendBindings().find(
+    (binding) => binding.provider === provider && binding.runtime === runtime,
+  );
+  if (runtimeBinding) {
+    return runtimeBinding;
+  }
+  const includeSetupRegistry = params.config !== undefined || params.env !== undefined;
+  if (!includeSetupRegistry) {
+    return undefined;
+  }
   return listCliRuntimeModelBackendBindings({
     config: params.config,
     env: params.env,
-    includeSetupRegistry: params.config !== undefined || params.env !== undefined,
+    includeSetupRegistry: true,
   }).find((binding) => binding.provider === provider && binding.runtime === runtime);
 }
 

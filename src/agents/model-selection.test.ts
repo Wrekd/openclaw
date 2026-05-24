@@ -218,23 +218,23 @@ describe("model-selection", () => {
   describe("normalizeProviderId", () => {
     it("should normalize provider names", () => {
       expect(normalizeProviderId("Anthropic")).toBe("anthropic");
-      expect(normalizeProviderId("Z.ai")).toBe("zai");
-      expect(normalizeProviderId("z-ai")).toBe("zai");
-      expect(normalizeProviderId("OpenCode-Zen")).toBe("opencode");
+      expect(normalizeProviderId("Z.ai")).toBe("z.ai");
+      expect(normalizeProviderId("z-ai")).toBe("z-ai");
+      expect(normalizeProviderId("OpenCode-Zen")).toBe("opencode-zen");
       expect(normalizeProviderId("qwen")).toBe("qwen");
-      expect(normalizeProviderId("kimi-code")).toBe("kimi");
-      expect(normalizeProviderId("kimi-coding")).toBe("kimi");
-      expect(normalizeProviderId("MoonshotAI")).toBe("moonshot");
-      expect(normalizeProviderId("moonshot-ai")).toBe("moonshot");
-      expect(normalizeProviderId("bedrock")).toBe("amazon-bedrock");
-      expect(normalizeProviderId("aws-bedrock")).toBe("amazon-bedrock");
+      expect(normalizeProviderId("kimi-code")).toBe("kimi-code");
+      expect(normalizeProviderId("kimi-coding")).toBe("kimi-coding");
+      expect(normalizeProviderId("MoonshotAI")).toBe("moonshotai");
+      expect(normalizeProviderId("moonshot-ai")).toBe("moonshot-ai");
+      expect(normalizeProviderId("bedrock")).toBe("bedrock");
+      expect(normalizeProviderId("aws-bedrock")).toBe("aws-bedrock");
       expect(normalizeProviderId("amazon-bedrock")).toBe("amazon-bedrock");
     });
   });
 
   describe("normalizeProviderIdForAuth", () => {
-    it("only applies generic provider-id normalization before auth alias lookup", () => {
-      expect(normalizeProviderIdForAuth("qwencloud")).toBe("qwen");
+    it("only applies lowercase provider-id normalization before auth alias lookup", () => {
+      expect(normalizeProviderIdForAuth("qwencloud")).toBe("qwencloud");
       expect(normalizeProviderIdForAuth("openai-codex")).toBe("openai-codex");
       expect(normalizeProviderIdForAuth("openai")).toBe("openai");
     });
@@ -461,7 +461,7 @@ describe("model-selection", () => {
       });
     });
 
-    it("normalizes explicit override providers without reparsing runtime semantics", () => {
+    it("preserves explicit override provider ids without reparsing runtime semantics", () => {
       expect(
         resolvePersistedModelRef({
           defaultProvider: "anthropic",
@@ -469,7 +469,7 @@ describe("model-selection", () => {
           overrideModel: "kimi-code",
         }),
       ).toEqual({
-        provider: "kimi",
+        provider: "kimi-coding",
         model: "kimi-code",
       });
     });
@@ -500,7 +500,7 @@ describe("model-selection", () => {
       });
     });
 
-    it("normalizes explicit override providers without reparsing away wrapper semantics", () => {
+    it("preserves explicit override provider ids without reparsing away wrapper semantics", () => {
       expect(
         resolvePersistedOverrideModelRef({
           defaultProvider: "anthropic",
@@ -508,7 +508,7 @@ describe("model-selection", () => {
           overrideModel: "kimi-code",
         }),
       ).toEqual({
-        provider: "kimi",
+        provider: "kimi-coding",
         model: "kimi-code",
       });
     });
@@ -1813,7 +1813,7 @@ describe("model-selection", () => {
       ).toEqual({ provider: "kilocode", model: "google/gemini-3.1-pro-preview" });
     });
 
-    it("keeps legacy modelstudio aliases when no exact foreign api owner is configured", () => {
+    it("preserves explicit provider ids when no exact foreign api owner is configured", () => {
       const cfg = {
         agents: {
           defaults: {
@@ -1828,7 +1828,7 @@ describe("model-selection", () => {
           defaultProvider: "anthropic",
           defaultModel: "claude-opus-4-6",
         }),
-      ).toEqual({ provider: "qwen", model: "qwen3.5-plus" });
+      ).toEqual({ provider: "modelstudio", model: "qwen3.5-plus" });
     });
 
     it("should fall back to hardcoded default when no custom providers have models", () => {
