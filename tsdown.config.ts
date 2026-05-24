@@ -309,6 +309,7 @@ function buildAgentCoreDistEntries(): Record<string, string> {
     "harness/agent-harness": "packages/agent-core/src/harness/agent-harness.ts",
     "harness/types": "packages/agent-core/src/harness/types.ts",
     "harness/messages": "packages/agent-core/src/harness/messages.ts",
+    "harness/env/kill-tree": "packages/agent-core/src/harness/env/kill-tree.ts",
     "harness/session": "packages/agent-core/src/harness/session/session.ts",
     "harness/session/jsonl-repo": "packages/agent-core/src/harness/session/jsonl-repo.ts",
     "harness/session/jsonl-storage": "packages/agent-core/src/harness/session/jsonl-storage.ts",
