@@ -1,4 +1,5 @@
 export {
   parseJsonObjectPreservingUnsafeIntegers,
   parseJsonPreservingUnsafeIntegers,
-} from "openclaw/plugin-sdk/json-unsafe-integers";
+  quoteUnsafeIntegerLiterals,
+} from "../agents/json-unsafe-integers.js";
