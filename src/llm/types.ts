@@ -19,9 +19,6 @@ export type ImagesApi = KnownImagesApi | (string & {});
 
 export type Provider = string;
 
-/** @deprecated Provider IDs are plugin-owned strings. Use `Provider`. */
-export type KnownProvider = Provider;
-
 export type KnownImagesProvider = "openrouter";
 
 export type ImagesProvider = string;
