@@ -186,7 +186,7 @@ describe("buildStatusMessage", () => {
   it("uses estimated context budget status when fresh totalTokens are unavailable", () => {
     const text = buildStatusMessage({
       agent: {
-        model: "anthropic/pi:opus",
+        model: "anthropic/claude-sonnet-4.6",
         contextTokens: 1_000_000,
       },
       sessionEntry: {
@@ -202,7 +202,7 @@ describe("buildStatusMessage", () => {
           source: "pre-prompt-estimate",
           updatedAt: 1,
           provider: "anthropic",
-          model: "pi:opus",
+          model: "claude-sonnet-4.6",
           route: "fits",
           shouldCompact: false,
           estimatedPromptTokens: 640_000,
@@ -233,7 +233,7 @@ describe("buildStatusMessage", () => {
   it("prefers fresh totalTokens over estimated context budget status", () => {
     const text = buildStatusMessage({
       agent: {
-        model: "anthropic/pi:opus",
+        model: "anthropic/claude-sonnet-4.6",
         contextTokens: 1_000_000,
       },
       sessionEntry: {
@@ -247,7 +247,7 @@ describe("buildStatusMessage", () => {
           source: "pre-prompt-estimate",
           updatedAt: 1,
           provider: "anthropic",
-          model: "pi:opus",
+          model: "claude-sonnet-4.6",
           route: "fits",
           shouldCompact: false,
           estimatedPromptTokens: 640_000,
@@ -277,7 +277,7 @@ describe("buildStatusMessage", () => {
   it("uses estimated context budget status when token usage is absent", () => {
     const text = buildStatusMessage({
       agent: {
-        model: "anthropic/pi:opus",
+        model: "anthropic/claude-sonnet-4.6",
         contextTokens: 1_000_000,
       },
       sessionEntry: {
@@ -289,7 +289,7 @@ describe("buildStatusMessage", () => {
           source: "pre-prompt-estimate",
           updatedAt: 1,
           provider: "anthropic",
-          model: "pi:opus",
+          model: "claude-sonnet-4.6",
           route: "fits",
           shouldCompact: false,
           estimatedPromptTokens: 125_000,
