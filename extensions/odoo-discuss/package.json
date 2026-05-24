@@ -1,0 +1,36 @@
+{
+  "name": "@openclaw/odoo-discuss",
+  "version": "2026.5.24",
+  "description": "OpenClaw Odoo Discuss channel plugin",
+  "type": "module",
+  "devDependencies": {
+    "@openclaw/plugin-sdk": "workspace:*"
+  },
+  "openclaw": {
+    "extensions": ["./index.ts"],
+    "install": {
+      "minHostVersion": ">=2026.5.0"
+    },
+    "setupEntry": "./setup-entry.ts",
+    "channel": {
+      "id": "odoo-discuss",
+      "label": "Odoo Discuss",
+      "selectionLabel": "Odoo Discuss (ERP Chat)",
+      "detailLabel": "Odoo Discuss",
+      "docsPath": "/channels/odoo-discuss",
+      "docsLabel": "odoo-discuss",
+      "blurb": "Odoo ERP internal messaging via XML-RPC.",
+      "aliases": ["odoo", "odoo-chat"],
+      "systemImage": "message",
+      "configuredState": {
+        "env": {
+          "ODOO_URL": { "label": "Odoo URL", "blurb": "Base URL for Odoo instance" },
+          "ODOO_DB": { "label": "Odoo Database", "blurb": "Database name" },
+          "ODOO_USER": { "label": "Odoo User", "blurb": "Username/email for authentication" },
+          "ODOO_PASSWORD": { "label": "Odoo Password", "blurb": "Password or API key", "secret": true }
+        }
+      },
+      "order": 150
+    }
+  }
+}
