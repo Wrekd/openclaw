@@ -1,0 +1,15 @@
+{
+  "id": "odoo-discuss",
+  "activation": {
+    "onStartup": false
+  },
+  "channels": ["odoo-discuss"],
+  "channelEnvVars": {
+    "odoo-discuss": ["ODOO_URL", "ODOO_DB", "ODOO_USER", "ODOO_PASSWORD"]
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

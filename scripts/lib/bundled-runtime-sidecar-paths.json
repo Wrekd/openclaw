@@ -9,6 +9,7 @@
   "dist/extensions/lmstudio/runtime-api.js",
   "dist/extensions/mattermost/runtime-api.js",
   "dist/extensions/memory-core/runtime-api.js",
+  "dist/extensions/odoo-discuss/runtime-api.js",
   "dist/extensions/ollama/runtime-api.js",
   "dist/extensions/open-prose/runtime-api.js",
   "dist/extensions/signal/runtime-api.js",

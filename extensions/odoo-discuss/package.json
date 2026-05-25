@@ -24,10 +24,7 @@
       "systemImage": "message",
       "configuredState": {
         "env": {
-          "ODOO_URL": { "label": "Odoo URL", "blurb": "Base URL for Odoo instance" },
-          "ODOO_DB": { "label": "Odoo Database", "blurb": "Database name" },
-          "ODOO_USER": { "label": "Odoo User", "blurb": "Username/email for authentication" },
-          "ODOO_PASSWORD": { "label": "Odoo Password", "blurb": "Password or API key", "secret": true }
+          "allOf": ["ODOO_URL", "ODOO_DB", "ODOO_USER", "ODOO_PASSWORD"]
         }
       },
       "order": 150
