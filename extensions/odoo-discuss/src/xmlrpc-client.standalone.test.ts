@@ -263,10 +263,10 @@ describe("Account Resolution", () => {
   function resolveOdooDiscussAccount(params: { cfg: CoreConfig; accountId?: string | null }) {
     const { cfg, accountId = DEFAULT_ACCOUNT_ID } = params;
     const odooConfig = cfg?.channels?.["odoo-discuss"];
-    const envUrl = process.env.ODOO_URL || "";
-    const envDb = process.env.ODOO_DB || "";
-    const envUser = process.env.ODOO_USER || "";
-    const envPassword = process.env.ODOO_PASSWORD || "";
+    const envUrl = process.env.ODOO_DISCUSS_URL || "";
+    const envDb = process.env.ODOO_DISCUSS_DB || "";
+    const envUser = process.env.ODOO_DISCUSS_USER || "";
+    const envPassword = process.env.ODOO_DISCUSS_PASSWORD || "";
 
     const config: OdooDiscussConfig = {
       url: odooConfig?.url || envUrl,
@@ -350,13 +350,13 @@ describe("Session Key Generation", () => {
 describe("Live Odoo Connection Test", () => {
   it.skip("should authenticate to real Odoo server", async () => {
     // This test requires actual Odoo credentials
-    const url = process.env.ODOO_URL || "https://erp.wrekd.com";
-    const db = process.env.ODOO_DB || "WREKD";
-    const user = process.env.ODOO_USER || "kaveman@wrekd.com";
-    const password = process.env.ODOO_PASSWORD || "";
+    const url = process.env.ODOO_DISCUSS_URL || "https://erp.wrekd.com";
+    const db = process.env.ODOO_DISCUSS_DB || "WREKD";
+    const user = process.env.ODOO_DISCUSS_USER || "kaveman@wrekd.com";
+    const password = process.env.ODOO_DISCUSS_PASSWORD || "";
 
     if (!password) {
-      console.log("Skipping live test - no ODOO_PASSWORD set");
+      console.log("Skipping live test - no ODOO_DISCUSS_PASSWORD set");
       return;
     }
 

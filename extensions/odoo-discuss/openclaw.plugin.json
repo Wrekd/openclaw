@@ -5,7 +5,7 @@
   },
   "channels": ["odoo-discuss"],
   "channelEnvVars": {
-    "odoo-discuss": ["ODOO_URL", "ODOO_DB", "ODOO_USER", "ODOO_PASSWORD"]
+    "odoo-discuss": ["ODOO_DISCUSS_URL", "ODOO_DISCUSS_DB", "ODOO_DISCUSS_USER", "ODOO_DISCUSS_PASSWORD"]
   },
   "configSchema": {
     "type": "object",

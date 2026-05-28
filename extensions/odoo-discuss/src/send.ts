@@ -90,5 +90,22 @@ export async function sendMessageToChannel(
     channelId = channel.id;
   }
 
-  return await sendMessageOdooDiscuss(channelId, text, options);
+  try {
+    const messageId = await client.sendMessage(channelId, text);
+    try {
+      const core = getOdooDiscussRuntime();
+      core.channel.activity.record({
+        channel: "odoo-discuss",
+        accountId: account.accountId,
+        direction: "outbound",
+      });
+    } catch {
+      // Ignore activity recording errors
+    }
+    return messageId;
+  } catch (error) {
+    throw new Error(
+      `Failed to send message to Odoo Discuss channel ${channelId}: ${String(error)}`,
+    );
+  }
 }

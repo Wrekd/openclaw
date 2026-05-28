@@ -60,15 +60,18 @@ describe("odooDiscussPlugin", () => {
       const hasConfiguredState = odooDiscussPlugin.config.hasConfiguredState;
       expect(typeof hasConfiguredState).toBe("function");
 
+      const cfg = {} as Parameters<NonNullable<typeof hasConfiguredState>>[0]["cfg"];
+
       // No env vars
-      expect(hasConfiguredState?.({ env: {} })).toBe(false);
+      expect(hasConfiguredState?.({ cfg, env: {} })).toBe(false);
 
       // With env vars
       expect(
         hasConfiguredState?.({
+          cfg,
           env: {
-            ODOO_URL: "https://erp.example.com",
-            ODOO_USER: "admin",
+            ODOO_DISCUSS_URL: "https://erp.example.com",
+            ODOO_DISCUSS_USER: "admin",
           },
         }),
       ).toBe(true);
@@ -133,7 +136,7 @@ describe("odooDiscussPlugin", () => {
   describe("security", () => {
     it("should have pairing config", () => {
       expect(odooDiscussPlugin.pairing).toBeDefined();
-      expect(odooDiscussPlugin.pairing?.text?.idLabel).toBe("odooUserId");
+      expect(odooDiscussPlugin.pairing?.idLabel).toBe("odooUserId");
     });
 
     it("should resolve DM policy", () => {

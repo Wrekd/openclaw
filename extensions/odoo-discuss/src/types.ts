@@ -10,7 +10,7 @@ export interface OdooDiscussConfig {
   pollIntervalMs?: number;
   defaultChannelId?: number;
   allowFrom?: string[];
-  dmPolicy?: "open" | "allowlist" | "pairing" | "off";
+  dmPolicy?: "open" | "allowlist" | "pairing" | "disabled";
   groupPolicy?: "open" | "allowlist" | "disabled";
   allowedChannels?: number[];
   botName?: string;
@@ -88,6 +88,7 @@ export interface OdooMessage {
   record_name?: string;
   channel_ids?: number[];
   partner_ids?: number[];
+  parent_id?: [number, string] | false;
   author?: {
     id: number;
     name: string;
@@ -111,6 +112,7 @@ export interface OdooInboundMessage {
   senderName: string;
   body: string;
   timestamp: number;
+  replyToBot?: boolean;
 }
 
 export interface OdooXmlRpcClient {
@@ -139,7 +141,4 @@ export interface OdooConnectionInfo {
   serverVersion: string;
 }
 
-export type RuntimeEnv = {
-  log?: (message: string) => void;
-  error?: (message: string) => void;
-};
+export type { RuntimeEnv } from "openclaw/plugin-sdk/runtime";

@@ -19,10 +19,10 @@ export interface CoreConfig {
  */
 function resolveConfigFromEnv(): Partial<OdooDiscussConfig> {
   return {
-    url: process.env.ODOO_URL || "",
-    db: process.env.ODOO_DB || "",
-    user: process.env.ODOO_USER || "",
-    password: process.env.ODOO_PASSWORD || "",
+    url: process.env.ODOO_DISCUSS_URL || "",
+    db: process.env.ODOO_DISCUSS_DB || "",
+    user: process.env.ODOO_DISCUSS_USER || "",
+    password: process.env.ODOO_DISCUSS_PASSWORD || "",
   };
 }
 

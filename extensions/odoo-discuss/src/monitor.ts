@@ -27,6 +27,7 @@ function convertOdooMessage(
   msg: OdooMessage,
   channelName: string,
   isGroup: boolean,
+  replyToBot: boolean,
 ): OdooInboundMessage {
   const authorId = Array.isArray(msg.author_id) ? msg.author_id[0] : 0;
   const authorName = Array.isArray(msg.author_id) ? msg.author_id[1] : "Unknown";
@@ -40,6 +41,7 @@ function convertOdooMessage(
     senderName: authorName,
     body: stripHtml(msg.body || ""),
     timestamp: msg.date ? new Date(msg.date).getTime() : Date.now(),
+    replyToBot,
   };
 }
 
@@ -74,6 +76,7 @@ export async function monitorOdooDiscuss(opts: OdooMonitorOptions): Promise<{ st
   let running = true;
   let lastMessageId = 0;
   let connectedUid: number | null = null;
+  let connectedPartnerId: number | null = null;
 
   // Authenticate and get initial state
   try {
@@ -81,6 +84,24 @@ export async function monitorOdooDiscuss(opts: OdooMonitorOptions): Promise<{ st
     logger.info(
       `[${account.accountId}] authenticated to ${account.config.url} as uid=${connectedUid}`,
     );
+
+    // Resolve our partner_id so we can filter out our own messages (author_id is a res.partner ref, not res.users).
+    // This is REQUIRED: without it we'd dispatch our own replies back through the agent and loop forever.
+    const users = await client.searchRead<{ id: number; partner_id: [number, string] | false }>(
+      "res.users",
+      [["id", "=", connectedUid]],
+      ["partner_id"],
+      { limit: 1 },
+    );
+    if (users.length > 0 && Array.isArray(users[0].partner_id)) {
+      connectedPartnerId = users[0].partner_id[0];
+      logger.info(`[${account.accountId}] resolved partner_id=${connectedPartnerId}`);
+    }
+    if (connectedPartnerId === null) {
+      throw new Error(
+        `[${account.accountId}] could not resolve partner_id for uid=${connectedUid}; refusing to start to avoid self-message loop`,
+      );
+    }
 
     // Set presence to online
     if (account.config.presenceEnabled !== false) {
@@ -96,10 +117,17 @@ export async function monitorOdooDiscuss(opts: OdooMonitorOptions): Promise<{ st
     const channels = await client.getChannels();
     logger.info(`[${account.accountId}] monitoring ${channels.length} channels`);
 
-    // Get initial last message ID to avoid processing old messages
-    const initialMessages = await client.pollMessages();
-    if (initialMessages.length > 0) {
-      lastMessageId = Math.max(...initialMessages.map((m) => m.id));
+    // Get the current latest message ID so we only process messages that arrive AFTER startup.
+    // Previously polled without lastMessageId (ASC limit 100) which returned the OLDEST 100 and
+    // started us replaying days of history.
+    const latest = await client.searchRead<{ id: number }>(
+      "mail.message",
+      [["model", "=", "discuss.channel"]],
+      ["id"],
+      { limit: 1, order: "id desc" },
+    );
+    if (latest.length > 0) {
+      lastMessageId = latest[0].id;
       logger.info(`[${account.accountId}] starting from message ID ${lastMessageId}`);
     }
   } catch (error) {
@@ -120,6 +148,18 @@ export async function monitorOdooDiscuss(opts: OdooMonitorOptions): Promise<{ st
   // Polling loop
   const pollIntervalMs = account.config.pollIntervalMs ?? 5000;
 
+  // Track recently sent bot message IDs so we can detect when a user replies
+  // to one of our messages (implicit mention via parent_id).
+  const sentMessageIds = new Set<number>();
+  const SENT_HISTORY_LIMIT = 500;
+  function recordSentMessageId(id: number) {
+    sentMessageIds.add(id);
+    if (sentMessageIds.size > SENT_HISTORY_LIMIT) {
+      const oldest = sentMessageIds.values().next().value;
+      if (oldest !== undefined) sentMessageIds.delete(oldest);
+    }
+  }
+
   async function poll() {
     while (running && !opts.abortSignal?.aborted) {
       try {
@@ -131,9 +171,9 @@ export async function monitorOdooDiscuss(opts: OdooMonitorOptions): Promise<{ st
             lastMessageId = msg.id;
           }
 
-          // Skip messages from self
+          // Skip messages from self (author_id is a res.partner ref)
           const authorId = Array.isArray(msg.author_id) ? msg.author_id[0] : 0;
-          if (authorId === connectedUid) {
+          if (connectedPartnerId !== null && authorId === connectedPartnerId) {
             continue;
           }
 
@@ -149,7 +189,16 @@ export async function monitorOdooDiscuss(opts: OdooMonitorOptions): Promise<{ st
             isGroup: true,
           };
 
-          const inboundMessage = convertOdooMessage(msg, channelInfo.name, channelInfo.isGroup);
+          // Detect reply-to-bot via parent_id pointing at a message we sent.
+          const parentId = Array.isArray(msg.parent_id) ? msg.parent_id[0] : 0;
+          const replyToBot = parentId > 0 && sentMessageIds.has(parentId);
+
+          const inboundMessage = convertOdooMessage(
+            msg,
+            channelInfo.name,
+            channelInfo.isGroup,
+            replyToBot,
+          );
 
           // Skip empty messages
           if (!inboundMessage.body.trim()) {
@@ -172,7 +221,10 @@ export async function monitorOdooDiscuss(opts: OdooMonitorOptions): Promise<{ st
               config: cfg,
               runtime,
               sendReply: async (targetChannelId, text) => {
-                await client.sendMessage(targetChannelId, text);
+                const sentId = await client.sendMessage(targetChannelId, text);
+                if (typeof sentId === "number" && sentId > 0) {
+                  recordSentMessageId(sentId);
+                }
                 opts.statusSink?.({ lastOutboundAt: Date.now() });
                 core.channel.activity.record({
                   channel: "odoo-discuss",
@@ -198,6 +250,16 @@ export async function monitorOdooDiscuss(opts: OdooMonitorOptions): Promise<{ st
     logger.error(`[${account.accountId}] polling stopped with error: ${String(error)}`);
   });
 
+  // Presence heartbeat (Odoo expires presence after ~60s of inactivity)
+  let presenceTimer: ReturnType<typeof setInterval> | null = null;
+  if (account.config.presenceEnabled !== false) {
+    presenceTimer = setInterval(() => {
+      client.setPresence("online").catch((error) => {
+        logger.warn(`[${account.accountId}] presence heartbeat failed: ${String(error)}`);
+      });
+    }, 30_000);
+  }
+
   // Handle abort signal
   opts.abortSignal?.addEventListener("abort", () => {
     running = false;
@@ -206,6 +268,10 @@ export async function monitorOdooDiscuss(opts: OdooMonitorOptions): Promise<{ st
   return {
     stop: () => {
       running = false;
+      if (presenceTimer) {
+        clearInterval(presenceTimer);
+        presenceTimer = null;
+      }
       // Set presence to offline
       if (account.config.presenceEnabled !== false) {
         client.setPresence("offline").catch(() => {});

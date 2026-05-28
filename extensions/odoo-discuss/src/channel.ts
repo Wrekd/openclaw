@@ -210,10 +210,10 @@ export const odooDiscussPlugin: ChannelPlugin<ResolvedOdooDiscussAccount, OdooDi
       config: {
         ...odooDiscussConfigAdapter,
         hasConfiguredState: ({ env }) =>
-          typeof env?.ODOO_URL === "string" &&
-          env.ODOO_URL.trim().length > 0 &&
-          typeof env?.ODOO_USER === "string" &&
-          env.ODOO_USER.trim().length > 0,
+          typeof env?.ODOO_DISCUSS_URL === "string" &&
+          env.ODOO_DISCUSS_URL.trim().length > 0 &&
+          typeof env?.ODOO_DISCUSS_USER === "string" &&
+          env.ODOO_DISCUSS_USER.trim().length > 0,
         isConfigured: (account) => account.configured,
       },
       messaging: {
@@ -235,15 +235,18 @@ export const odooDiscussPlugin: ChannelPlugin<ResolvedOdooDiscussAccount, OdooDi
       directory: createEmptyChannelDirectoryAdapter(),
       status: createComputedAccountStatusAdapter<ResolvedOdooDiscussAccount, OdooDiscussProbe>({
         defaultRuntime: createDefaultChannelRuntimeState(DEFAULT_ACCOUNT_ID),
-        buildChannelSummary: ({ account, snapshot }) => ({
-          configured: account.configured,
-          connected: snapshot.probe?.kind === "connected",
-          label: account.config.url || "Not configured",
-          url: account.config.url,
-          user: account.config.user,
-          probe: snapshot.probe,
-          lastProbeAt: snapshot.lastProbeAt ?? null,
-        }),
+        buildChannelSummary: ({ account, snapshot }) => {
+          const probe = snapshot.probe as OdooDiscussProbe | undefined;
+          return {
+            configured: account.configured,
+            connected: probe?.kind === "connected",
+            label: account.config.url || "Not configured",
+            url: account.config.url,
+            user: account.config.user,
+            probe,
+            lastProbeAt: snapshot.lastProbeAt ?? null,
+          };
+        },
         probeAccount: async ({ cfg, account, timeoutMs }) =>
           probeOdooDiscuss(cfg as CoreConfig, {
             accountId: account.accountId,

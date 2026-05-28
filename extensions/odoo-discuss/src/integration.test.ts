@@ -8,7 +8,7 @@
  * 4. Presence - Set user as online
  * 5. Session Management - Session keys per channel
  *
- * Run with: ODOO_PASSWORD=<key> npx vitest run this-file.test.ts
+ * Run with: ODOO_DISCUSS_PASSWORD=<key> npx vitest run this-file.test.ts
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
@@ -17,10 +17,10 @@ import { createOdooXmlRpcClient, testConnection, stripHtml } from "./xmlrpc-clie
 
 // Test configuration - uses env vars or defaults
 const testConfig: OdooDiscussConfig = {
-  url: process.env.ODOO_URL || "https://erp.wrekd.com",
-  db: process.env.ODOO_DB || "WREKD",
-  user: process.env.ODOO_USER || "kaveman@wrekd.com",
-  password: process.env.ODOO_PASSWORD || "",
+  url: process.env.ODOO_DISCUSS_URL || "https://erp.wrekd.com",
+  db: process.env.ODOO_DISCUSS_DB || "WREKD",
+  user: process.env.ODOO_DISCUSS_USER || "kaveman@wrekd.com",
+  password: process.env.ODOO_DISCUSS_PASSWORD || "",
 };
 
 const hasCredentials = Boolean(testConfig.password);
@@ -30,7 +30,7 @@ describe("Odoo Discuss Integration Tests", () => {
 
   beforeAll(async () => {
     if (!hasCredentials) {
-      console.log("⚠️ Skipping live tests - set ODOO_PASSWORD to run");
+      console.log("⚠️ Skipping live tests - set ODOO_DISCUSS_PASSWORD to run");
       return;
     }
     client = createOdooXmlRpcClient(testConfig);

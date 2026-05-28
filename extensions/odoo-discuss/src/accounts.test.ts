@@ -57,8 +57,8 @@ describe("accounts", () => {
     });
 
     it("should return default account id when env vars present", () => {
-      process.env.ODOO_URL = "https://erp.example.com";
-      process.env.ODOO_USER = "admin";
+      process.env.ODOO_DISCUSS_URL = "https://erp.example.com";
+      process.env.ODOO_DISCUSS_USER = "admin";
 
       // Need to re-import to pick up env vars
       const ids = listOdooDiscussAccountIds({});
@@ -101,10 +101,10 @@ describe("accounts", () => {
     });
 
     it("should fallback to env vars", () => {
-      process.env.ODOO_URL = "https://env.example.com";
-      process.env.ODOO_DB = "env_db";
-      process.env.ODOO_USER = "env_user";
-      process.env.ODOO_PASSWORD = "env_password";
+      process.env.ODOO_DISCUSS_URL = "https://env.example.com";
+      process.env.ODOO_DISCUSS_DB = "env_db";
+      process.env.ODOO_DISCUSS_USER = "env_user";
+      process.env.ODOO_DISCUSS_PASSWORD = "env_password";
 
       const account = resolveOdooDiscussAccount({ cfg: {} });
 
@@ -116,8 +116,8 @@ describe("accounts", () => {
     });
 
     it("should use config over env vars", () => {
-      process.env.ODOO_URL = "https://env.example.com";
-      process.env.ODOO_DB = "env_db";
+      process.env.ODOO_DISCUSS_URL = "https://env.example.com";
+      process.env.ODOO_DISCUSS_DB = "env_db";
 
       const config: CoreConfig = {
         channels: {

@@ -7,7 +7,7 @@
 import { createAccountStatusSink } from "openclaw/plugin-sdk/channel-lifecycle";
 import { runStoppablePassiveMonitor } from "openclaw/plugin-sdk/extension-shared";
 import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/status-helpers";
-import { resolveOdooDiscussAccount, type CoreConfig } from "./accounts.js";
+import type { CoreConfig } from "./accounts.js";
 import { monitorOdooDiscuss } from "./monitor.js";
 import type { ResolvedOdooDiscussAccount, RuntimeEnv } from "./types.js";
 

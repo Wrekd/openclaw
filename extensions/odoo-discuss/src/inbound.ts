@@ -4,17 +4,23 @@
  * Processes incoming messages from Odoo Discuss.
  */
 
-import { logInboundDrop } from "openclaw/plugin-sdk/channel-inbound";
+import {
+  classifyChannelInboundEvent,
+  logInboundDrop,
+  resolveUnmentionedGroupInboundPolicy,
+} from "openclaw/plugin-sdk/channel-inbound";
 import {
   channelIngressRoutes,
   createChannelIngressResolver,
   defineStableChannelIngressIdentity,
 } from "openclaw/plugin-sdk/channel-ingress-runtime";
 import { createChannelPairingController } from "openclaw/plugin-sdk/channel-pairing";
+import { resolveChannelGroupRequireMention } from "openclaw/plugin-sdk/channel-policy";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
 import { resolveInboundRouteEnvelopeBuilderWithRuntime } from "openclaw/plugin-sdk/inbound-envelope";
 import {
   deliverFormattedTextWithAttachments,
+  isReasoningReplyPayload,
   type OutboundReplyPayload,
 } from "openclaw/plugin-sdk/reply-payload";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime";
@@ -25,6 +31,7 @@ import {
   warnMissingProviderGroupPolicyFallbackOnce,
 } from "openclaw/plugin-sdk/runtime-group-policy";
 import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+import { sanitizeAssistantVisibleText } from "openclaw/plugin-sdk/text-chunking";
 import type { CoreConfig } from "./accounts.js";
 import { getOdooDiscussRuntime } from "./runtime.js";
 import { sendMessageOdooDiscuss } from "./send.js";
@@ -76,14 +83,27 @@ async function deliverOdooReply(params: {
   accountId: string;
   sendReply?: (channelId: number, text: string) => Promise<void>;
   statusSink?: (patch: { lastOutboundAt?: number }) => void;
+  log?: (line: string) => void;
 }) {
+  if (isReasoningReplyPayload(params.payload)) {
+    params.log?.(`odoo-discuss: deliver skip channel=${params.channelId} reason=reasoning-only`);
+    return;
+  }
   await deliverFormattedTextWithAttachments({
     payload: params.payload,
     send: async ({ text }) => {
+      const clean = sanitizeAssistantVisibleText(text).trim();
+      if (!clean) {
+        params.log?.(
+          `odoo-discuss: deliver skip channel=${params.channelId} reason=empty-text rawLen=${text.length}`,
+        );
+        return;
+      }
+      params.log?.(`odoo-discuss: deliver send channel=${params.channelId} chars=${clean.length}`);
       if (params.sendReply) {
-        await params.sendReply(params.channelId, text);
+        await params.sendReply(params.channelId, clean);
       } else {
-        await sendMessageOdooDiscuss(params.channelId, text, {
+        await sendMessageOdooDiscuss(params.channelId, clean, {
           cfg: params.cfg,
           accountId: params.accountId,
         });
@@ -145,8 +165,42 @@ export async function handleOdooDiscussInbound(params: {
     surface: CHANNEL_ID,
   });
   const hasControlCommand = core.channel.text.hasControlCommand(rawBody, config as OpenClawConfig);
-  const mentionRegexes = core.channel.mentions.buildMentionRegexes(config as OpenClawConfig);
+  const peerId = String(message.channelId);
+  const { route, buildEnvelope } = resolveInboundRouteEnvelopeBuilderWithRuntime({
+    cfg: config as OpenClawConfig,
+    channel: CHANNEL_ID,
+    accountId: account.accountId,
+    peer: {
+      kind: message.isGroup ? "group" : "direct",
+      id: peerId,
+    },
+    runtime: core.channel,
+    sessionStore: (config as OpenClawConfig).session?.store,
+  });
+  const mentionRegexes = core.channel.mentions.buildMentionRegexes(
+    config as OpenClawConfig,
+    route.agentId,
+  );
   const wasMentioned = core.channel.mentions.matchesMentionPatterns(rawBody, mentionRegexes);
+  const unmentionedGroupPolicy = resolveUnmentionedGroupInboundPolicy({
+    cfg: config as OpenClawConfig,
+    agentId: route.agentId,
+  });
+  const groupRequireMention = message.isGroup
+    ? resolveChannelGroupRequireMention({
+        cfg: config as OpenClawConfig,
+        channel: CHANNEL_ID,
+        groupId: String(message.channelId),
+        accountId: account.accountId,
+        configuredGroupDefaultsToNoMention: true,
+      })
+    : false;
+  // Ambient room_event mode: let unmentioned group messages flow so the agent decides whether to chime in.
+  const requireMention =
+    message.isGroup && unmentionedGroupPolicy !== "room_event" && groupRequireMention;
+  runtime.log?.(
+    `odoo-discuss: mention-debug agent=${route.agentId} regexes=${mentionRegexes.length} matched=${wasMentioned} requireMention=${requireMention} unmentionedPolicy=${unmentionedGroupPolicy} body=${JSON.stringify(rawBody.slice(0, 200))}`,
+  );
 
   const access = await createChannelIngressResolver({
     channelId: CHANNEL_ID,
@@ -170,6 +224,7 @@ export async function handleOdooDiscussInbound(params: {
           canDetectMention: true,
           wasMentioned,
           hasAnyMention: wasMentioned,
+          implicitMentionKinds: message.replyToBot ? ["reply_to_bot"] : [],
         }
       : undefined,
     dmPolicy,
@@ -178,7 +233,7 @@ export async function handleOdooDiscussInbound(params: {
       groupAllowFromFallbackToAllowFrom: false,
       mutableIdentifierMatching: "disabled",
       activation: {
-        requireMention: message.isGroup,
+        requireMention,
         allowTextCommands,
       },
     },
@@ -203,6 +258,7 @@ export async function handleOdooDiscussInbound(params: {
           accountId: account.accountId,
           sendReply: params.sendReply,
           statusSink,
+          log: (line) => runtime.log?.(line),
         });
       },
       onReplyError: (err) => {
@@ -237,25 +293,20 @@ export async function handleOdooDiscussInbound(params: {
     return;
   }
 
-  const peerId = String(message.channelId);
-  const { route, buildEnvelope } = resolveInboundRouteEnvelopeBuilderWithRuntime({
-    cfg: config as OpenClawConfig,
-    channel: CHANNEL_ID,
-    accountId: account.accountId,
-    peer: {
-      kind: message.isGroup ? "group" : "direct",
-      id: peerId,
-    },
-    runtime: core.channel,
-    sessionStore: (config as OpenClawConfig).session?.store,
-  });
-
   const fromLabel = message.isGroup ? message.channelName : senderDisplay;
   const { storePath, body } = buildEnvelope({
     channel: "Odoo Discuss",
     from: fromLabel,
     timestamp: message.timestamp,
     body: rawBody,
+  });
+
+  const effectiveWasMentioned = access.activationAccess.effectiveWasMentioned ?? wasMentioned;
+  const inboundEventKind = classifyChannelInboundEvent({
+    conversation: { kind: message.isGroup ? "group" : "direct" },
+    unmentionedGroupPolicy,
+    wasMentioned: effectiveWasMentioned,
+    hasControlCommand,
   });
 
   const ctxPayload = core.channel.reply.finalizeInboundContext({
@@ -275,12 +326,13 @@ export async function handleOdooDiscussInbound(params: {
     GroupSubject: message.isGroup ? message.channelName : undefined,
     Provider: CHANNEL_ID,
     Surface: CHANNEL_ID,
-    WasMentioned: message.isGroup ? wasMentioned : undefined,
+    WasMentioned: message.isGroup ? effectiveWasMentioned : undefined,
     MessageSid: message.messageId,
     Timestamp: message.timestamp,
     OriginatingChannel: CHANNEL_ID,
     OriginatingTo: `odoo-discuss:${peerId}`,
     CommandAuthorized: access.commandAccess.authorized,
+    InboundEventKind: inboundEventKind,
   });
 
   await core.channel.turn.runAssembled({
@@ -303,6 +355,7 @@ export async function handleOdooDiscussInbound(params: {
           accountId: account.accountId,
           sendReply: params.sendReply,
           statusSink,
+          log: (line) => runtime.log?.(line),
         });
       },
       onError: (err, info) => {

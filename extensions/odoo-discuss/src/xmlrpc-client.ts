@@ -232,23 +232,28 @@ export function createOdooXmlRpcClient(config: OdooDiscussConfig): OdooXmlRpcCli
     if (uid === null) {
       await authenticate();
     }
-    try {
-      // Odoo 19+ presence API
-      await call("bus.presence", "update_presence", [], {
-        inactivity_period: status === "offline" ? 30 * 60 : 0,
-        identity_field: "user_id",
-        identity_value: uid,
-      });
-    } catch {
-      // Try legacy API for older versions
+    // Odoo 19 doesn't expose update_presence over XML-RPC, so we write the
+    // mail.presence row directly. Try modern (mail.presence) then legacy (bus.presence).
+    const now = new Date().toISOString().replace("T", " ").slice(0, 19);
+    const vals: Record<string, unknown> = {
+      status,
+      last_poll: now,
+      last_presence: now,
+    };
+    for (const model of ["mail.presence", "bus.presence"]) {
       try {
-        await call("res.users", "update_presence", [[uid]], {
-          status,
-        });
+        const ids = await call<number[]>(model, "search", [[["user_id", "=", uid]]]);
+        if (ids.length > 0) {
+          await call(model, "write", [ids, vals]);
+        } else {
+          await call(model, "create", [{ ...vals, user_id: uid }]);
+        }
+        return;
       } catch {
-        // Ignore presence errors - not critical
+        // try next model
       }
     }
+    throw new Error("set presence failed: no compatible presence model");
   }
 
   async function getChannels(): Promise<OdooChannel[]> {
@@ -301,7 +306,17 @@ export function createOdooXmlRpcClient(config: OdooDiscussConfig): OdooXmlRpcCli
     return await searchRead<OdooMessage>(
       "mail.message",
       domain,
-      ["id", "body", "author_id", "date", "message_type", "record_name", "res_id", "partner_ids"],
+      [
+        "id",
+        "body",
+        "author_id",
+        "date",
+        "message_type",
+        "record_name",
+        "res_id",
+        "partner_ids",
+        "parent_id",
+      ],
       { limit: 100, order: "id asc" },
     );
   }
@@ -333,7 +348,7 @@ export function stripHtml(html: string): string {
     .replace(/&amp;/gi, "&")
     .replace(/&quot;/gi, '"')
     .replace(/&#39;/gi, "'")
-    .trim();
+    .replace(/\n+$/, "");
 }
 
 /**
